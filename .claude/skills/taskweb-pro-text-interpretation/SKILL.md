@@ -6,9 +6,9 @@ Ver `tasks/prd-registro-horas-texto-livre/prd.md` e `techspec.md` para o *o quê
 
 ## O que este skill NÃO faz
 
-- Não chama nenhuma MCP tool diretamente (nem Azure DevOps, nem Taskweb). Toda ação real é feita pelo skill `taskweb-pro-azure-integration`.
+- Não chama nenhuma MCP tool diretamente (nem Azure DevOps, nem Taskweb). Toda ação real é feita pelos skills `taskweb-pro-azure-integration` e `taskweb-pro-timer-control`.
 - Não decide sozinho quando a atividade é ambígua — sempre segue a regra de confirmação de `references/extract-and-dispatch.md`.
-- Não tenta iniciar/parar timer de fato: essa capacidade depende de `taskweb-mcp`, que está desconectado neste ambiente (mesma pendência do skill de integração).
+- Não implementa a lógica de iniciar/parar timer: um comando com `is_start_of_activity`/`is_stop_of_activity` é despachado para `taskweb-pro-timer-control` (ver `references/extract-and-dispatch.md` → passo 4), que por sua vez ainda depende de `taskweb-mcp` (desconectado neste ambiente) para o efeito real no Taskweb.
 
 ## Como executar
 

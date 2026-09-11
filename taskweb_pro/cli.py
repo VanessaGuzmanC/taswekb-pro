@@ -39,9 +39,18 @@ from taskweb_pro.azure_task_resolver import (
     work_type_to_activity,
 )
 from taskweb_pro.activity_classification import classify_work_type
-from taskweb_pro.models import ActionStatus, ChildTask
+from taskweb_pro.models import ActionStatus, ActiveTimer, ChildTask
 from taskweb_pro.taskweb_adapter import TaskwebUnavailableError, UnavailableTaskwebAdapter
 from taskweb_pro.time_parsing import parse_time_range
+from taskweb_pro.timer_state import (
+    NoActiveTimerError,
+    active_timer_to_dict,
+    clear_active_timer,
+    has_conflicting_timer,
+    load_active_timer,
+    resolve_stop_target,
+    save_active_timer,
+)
 
 
 def _child_from_dict(data: dict) -> ChildTask:
@@ -184,6 +193,49 @@ def cmd_classify_work_type(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_timer_get_active(args: argparse.Namespace) -> int:
+    active = load_active_timer()
+    _print_ok({"active": active_timer_to_dict(active) if active else None})
+    return 0
+
+
+def cmd_timer_check_conflict(args: argparse.Namespace) -> int:
+    active = load_active_timer()
+    conflict = has_conflicting_timer(active, args.requested_child_task_id)
+    _print_ok({"conflict": conflict, "active": active_timer_to_dict(active) if active else None})
+    return 0
+
+
+def cmd_timer_save_active(args: argparse.Namespace) -> int:
+    timer = ActiveTimer(
+        child_task_id=args.child_task_id,
+        parent_id=args.parent_id,
+        work_type=args.work_type,
+        user=args.user,
+        started_at=datetime.now(),
+    )
+    save_active_timer(timer)
+    _print_ok({"saved": True})
+    return 0
+
+
+def cmd_timer_resolve_stop_target(args: argparse.Namespace) -> int:
+    active = load_active_timer()
+    try:
+        child_task_id = resolve_stop_target(active, args.requested_child_task_id)
+    except NoActiveTimerError as exc:
+        _print_error(exc)
+        return 1
+    _print_ok({"child_task_id": child_task_id})
+    return 0
+
+
+def cmd_timer_clear_active(args: argparse.Namespace) -> int:
+    clear_active_timer()
+    _print_ok({"cleared": True})
+    return 0
+
+
 def cmd_taskweb_start_timer(args: argparse.Namespace) -> int:
     try:
         status = UnavailableTaskwebAdapter().start_timer(args.child_task_id)
@@ -272,6 +324,27 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("classify-work-type")
     p.add_argument("--hint", default=None)
     p.set_defaults(func=cmd_classify_work_type)
+
+    p = sub.add_parser("timer-get-active")
+    p.set_defaults(func=cmd_timer_get_active)
+
+    p = sub.add_parser("timer-check-conflict")
+    p.add_argument("--requested-child-task-id", required=True, type=int)
+    p.set_defaults(func=cmd_timer_check_conflict)
+
+    p = sub.add_parser("timer-save-active")
+    p.add_argument("--child-task-id", required=True, type=int)
+    p.add_argument("--parent-id", required=True, type=int)
+    p.add_argument("--work-type", required=True)
+    p.add_argument("--user", required=True)
+    p.set_defaults(func=cmd_timer_save_active)
+
+    p = sub.add_parser("timer-resolve-stop-target")
+    p.add_argument("--requested-child-task-id", default=None, type=int)
+    p.set_defaults(func=cmd_timer_resolve_stop_target)
+
+    p = sub.add_parser("timer-clear-active")
+    p.set_defaults(func=cmd_timer_clear_active)
 
     p = sub.add_parser("taskweb-start-timer")
     p.add_argument("--child-task-id", required=True, type=int)

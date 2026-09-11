@@ -17,7 +17,7 @@ No reemplaza a Taskweb ni a Azure DevOps — solo te ahorra los pasos manuales.
 | Buscar / crear / asignar tareas en Azure DevOps | ✅ Listo |
 | Registrar horas en Taskweb (timer, horarios) | 🚧 Código listo, esperando que se conecte `taskweb-mcp` |
 | Entender lo que escribís en lenguaje natural | ✅ Listo |
-| Control de timer desde un comando de texto | ⏳ Todavía no construido |
+| Control de timer desde un comando de texto | 🚧 Código listo, esperando que se conecte `taskweb-mcp` |
 
 ## Development
 

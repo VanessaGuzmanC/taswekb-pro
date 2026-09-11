@@ -27,3 +27,12 @@ class ActionStatus:
     success: bool
     message: str
     timestamp: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class ActiveTimer:
+    child_task_id: int
+    parent_id: int
+    work_type: WorkType
+    user: str
+    started_at: datetime
